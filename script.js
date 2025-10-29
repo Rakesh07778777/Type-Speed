@@ -49,7 +49,7 @@ function setTimer(){
     timerElement.innerText = 0
     startTime = new Date()
     setInterval(() => {
-        getTimerTime();
+       timer.innerText = getTimerTime();
     }, 1000)
 
     function getTimerTime() {
