@@ -50,7 +50,7 @@ function setTimer(){
     startTime = new Date()
     setInterval(() => {
         getTimerTime();
-    },1000)
+    }, 1000)
 
     function getTimerTime() {
         return Math.floor(( new Date() - startTime) / 1000)
