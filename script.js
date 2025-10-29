@@ -1,23 +1,7 @@
-const RANDOM_QUOTE_API_URL = 'https://api.quotable.io/random';
+const RANDOM_QUOTE_API_URL = 'http://api.quotable.io/random'
 const quoteDisplayElement = document.getElementById('quoteDisplay');
 const quoteInputElement = document.getElementById('quoteInput');
 const timerElement = document.getElementById('timer');
-
-let timerInterval;
-let startTime;
-
-// Load saved data from localStorage
-let quotesHistory = JSON.parse(localStorage.getItem('quotesHistory')) || [];
-let bestTime = localStorage.getItem('bestTime') || null;
-let lastQuote = localStorage.getItem('lastQuote') || null;
-
-// Display last quote if it exists
-if (lastQuote) {
-  displayQuote(lastQuote);
-  startTimer();
-} else {
-  renderNewQuote();
-}
 
 quoteInputElement.addEventListener('input', () => {
   const arrayQuote = quoteDisplayElement.querySelectorAll('span');
@@ -39,38 +23,25 @@ quoteInputElement.addEventListener('input', () => {
     }
   });
 
-  // When the quote is typed correctly
-  if (correct) handleCorrectQuote();
+  if (correct) renderNewQuote();
 });
 
-// ✅ Fetch random quote from API
-function getRandomQuote() {
-  return fetch(RANDOM_QUOTE_API_URL)
-    .then(response => response.json())
-    .then(data => data.content);
-}
-
-// ✅ Handle correct typing
-function handleCorrectQuote() {
-  const currentTime = getTimerTime();
-
-  // Save quote & time to history
-  const completedQuote = quoteDisplayElement.innerText;
-  quotesHistory.push({ quote: completedQuote, time: currentTime });
-
-  // Update best time
-  if (!bestTime || currentTime < bestTime) {
-    bestTime = currentTime;
-    localStorage.setItem('bestTime', bestTime);
+async function getRandomQuote() {
+  try {
+    const response = await fetch(RANDOM_QUOTE_API_URL);
+    if (!response.ok) throw new Error("Network response was not ok");
+    const data = await response.json();
+    return data.content;
+  } catch (error) {
+    console.error("Error fetching quote:", error);
+    quoteDisplayElement.innerText = "⚠️ Unable to load quote. Please check your internet or try again.";
+    return null;
   }
-
-  // Save updated history and move to next quote
-  localStorage.setItem('quotesHistory', JSON.stringify(quotesHistory));
-  renderNewQuote();
 }
 
-// ✅ Display quote character by character
-function displayQuote(quote) {
+async function renderNewQuote() {
+  const quote = await getRandomQuote();
+  if (!quote) return; // Stop if no quote fetched
   quoteDisplayElement.innerHTML = '';
   quote.split('').forEach(character => {
     const characterSpan = document.createElement('span');
@@ -78,25 +49,16 @@ function displayQuote(quote) {
     quoteDisplayElement.appendChild(characterSpan);
   });
   quoteInputElement.value = null;
-}
-
-// ✅ Render new quote and start timer
-async function renderNewQuote() {
-  const quote = await getRandomQuote();
-
-  // Save this quote as the "last quote"
-  localStorage.setItem('lastQuote', quote);
-
-  displayQuote(quote);
   startTimer();
 }
 
-// ✅ Timer functions
+let startTime;
+let timerInterval;
+
 function startTimer() {
   if (timerInterval) clearInterval(timerInterval);
   timerElement.innerText = 0;
   startTime = new Date();
-
   timerInterval = setInterval(() => {
     timerElement.innerText = getTimerTime();
   }, 1000);
@@ -105,3 +67,5 @@ function startTimer() {
 function getTimerTime() {
   return Math.floor((new Date() - startTime) / 1000);
 }
+
+renderNewQuote();
